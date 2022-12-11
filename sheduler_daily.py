@@ -1,11 +1,10 @@
-import sqlite3
-from asyncio import run, gather
+
+from asyncio import run, gather, sleep
 from datetime import datetime, timedelta
 # from time import time
-
+from database import db
 from aio_pika import Message, connect
 
-con = sqlite3.connect('vpn_service.db')
 
 '''ВЫПОЛНЯЕТСЯ РАЗ В ДЕНЬ'''
 
@@ -39,8 +38,8 @@ async def command_for_bot(command_text) -> None:
 
 
 # Напоминалка пользователю об окончании ПП
-async def try_period_reminder(connection):
-    tpd = await try_period_data(connection)
+async def try_period_reminder():
+    tpd = db.try_period_data()
     for i in range(len(tpd)):
         if datetime.today() <= datetime.fromisoformat(tpd[i][1]) <= datetime.today() + timedelta(days=1):
             # print('Осталось менее суток до окончания ПП: ОЧЕРЕДЬ')
@@ -51,13 +50,13 @@ async def try_period_reminder(connection):
             await command_for_bot(str(tpd[i][0]) + ' two_days_left_try_period')
         elif datetime.fromisoformat(tpd[i][1]) > datetime.today() + timedelta(days=2):
             break
+        sleep(2)
 
 
-async def payed_config_reminder(connection):
-    pcd = await payed_config_data(connection)
-
+async def payed_config_reminder():
+    # pcd = await payed_config_data(connection)
+    pcd = db.payed_config_data()
     for i in range(len(pcd)):
-
         if datetime.today() <= datetime.fromisoformat(pcd[i][1]) <= datetime.today() + timedelta(days=1):
             # print('Осталось менее суток до окончания ОК: ОЧЕРЕДЬ')
             await command_for_bot(
@@ -71,10 +70,11 @@ async def payed_config_reminder(connection):
                                                                                                                   ''))
         elif datetime.fromisoformat(pcd[i][1]) > datetime.today() + timedelta(days=2):
             break
+        sleep(2)
 
 
 async def starter():
-    await gather(try_period_reminder(con), payed_config_reminder(con))
+    await gather(try_period_reminder(), payed_config_reminder())
 
 
 run(starter())

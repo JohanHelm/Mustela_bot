@@ -1,3 +1,4 @@
+import calendar
 from datetime import datetime
 from os import listdir, system, remove
 from random import sample
@@ -30,6 +31,10 @@ class IncomePayment(StatesGroup):
     waiting_for_method = State()
     waiting_for_invoice = State()
     waiting_for_check = State()
+
+
+class DemandPartnerMoney(StatesGroup):
+    pass
 
 
 # main_menu
@@ -75,14 +80,19 @@ async def cmd_client_office(call: types.callback_query, state: FSMContext):
                                                             db.check_try_period(call.from_user.id)[0][3]))
         if db.check_orders(call.from_user.id):
             for order in db.check_orders(call.from_user.id):
-                if order[7] == 1:
-                    await bot.send_message(call.from_user.id,
-                                           order_data_msg(order[0], order[3], order[4], order[8][:-7]),
-                                           reply_markup=nav.disable_prolong)
+                if order[9]:
+                    if order[11]:
+                        await bot.send_message(call.from_user.id,
+                                           order_data_msg(order[0], order[3], order[4], order[10][:-7]),
+                                           reply_markup=nav.disable_prolong(order[0]))
+                    else:
+                        await bot.send_message(call.from_user.id,
+                                               order_data_msg(order[0], order[3], order[4], order[10][:-7]),
+                                               reply_markup=nav.enable_prolong(order[0]))
                     active_vpn = True
                 else:
                     await bot.send_message(call.from_user.id,
-                                           order_data_msg(order[0], order[3], order[4], order[8][:-7]),
+                                           order_data_msg(order[0], order[3], order[4], order[10][:-7]),
                                            reply_markup=nav.activate_order)
         if not active_vpn:
             await call.answer(no_try_no_order_msg, show_alert=True)
@@ -90,7 +100,39 @@ async def cmd_client_office(call: types.callback_query, state: FSMContext):
         await bot.send_photo(call.from_user.id, cfg.mustela, 'Привет {0.first_name}!\n'.format(call.from_user) +
                              hello_new_user_msg, reply_markup=nav.client_main_menu)
     elif call.data == 'office_need_conf':
-        await call.answer('выслать конфигурационные файлы в соответствии с тарифом')
+        if db.check_orders(call.from_user.id):
+            for order in db.check_orders(call.from_user.id):
+                if order[9]:
+                    config_files = listdir(f'/home/pp/vpn_service/config_files/{order[4]}/work/clients/{order[7]}')
+                    for i in range(order[3]):
+                        send_file = open(
+                            f'/home/pp/vpn_service/config_files/{order[4]}/work/clients/{order[7]}/{config_files[i]}',
+                            'rb')
+                        await bot.send_document(call.from_user.id, send_file, caption=after_config_msg)
+                        send_file.close()
+                else:
+                    await bot.send_message(call.from_user.id, dead_order_msg(order[0]))
+        else:
+            await call.answer('У вас нет активных подписок.')
+
+
+# @dp.callback_query_handler(text_contains='order')
+async def cmd_order_control(call: types.callback_query):
+    if call.data[:21] == 'order_disable_prolong':
+        db.set_order_prolong(0, call.data[22:])
+        await call.answer('Автопродление отключено.')
+    elif call.data[:20] == 'order_enable_prolong':
+        db.set_order_prolong(1, call.data[21:])
+        await call.answer('Автопродление включено.')
+    elif call.data == 'order_activate':
+        print('activate')
+        # odrer_id
+        # duration
+        # tarif
+        # price
+        # user_id
+        # on account
+
 
 
 # @dp.callback_query_handler(text_contains='partner')
@@ -139,17 +181,34 @@ async def cmd_choose_duration(call: types.callback_query, state: FSMContext):
                              hello_new_user_msg, reply_markup=nav.client_main_menu)
     else:
         await state.update_data(chosen_duration=call.data[9:])
-        await bot.send_message(call.from_user.id, await state.get_data())
         price = db.check_price(int((await state.get_data())['chosen_tarif']),
                                int((await state.get_data())['chosen_duration']))[0]
-        if db.get_user_data(call.from_user.id)[8] >= price and db.get_user_data(call.from_user.id)[12] == 0:
-            db.make_order(call.from_user.id, datetime.today(), int((await state.get_data())['chosen_tarif']),
-                          (await state.get_data())['chosen_country'], call.from_user.id,
-                          int((await state.get_data())['chosen_duration']),
-                          datetime.today() + relativedelta(months=int((await state.get_data())['chosen_duration'])),
-                          price)
-            await call.answer(congrats_msg)
-            await call.answer('выслать конфигурационные файлы в соответствии с тарифом')
+        user_data = db.get_user_data(call.from_user.id)
+        if user_data[8] >= price and user_data[12] == 0:
+            # await call.answer('выслать конфигурационные файлы в соответствии с тарифом')
+            country = (await state.get_data())['chosen_country']
+            interfaces = listdir(f'/home/pp/vpn_service/config_files/{country}/work/wsc')
+            client_interface = interfaces[0][10:19]
+            if system(f'ssh root@WG_WORK -p 4522 /root/enable_payed_user.sh {client_interface}') == 0:
+                config_files = listdir(f'/home/pp/vpn_service/config_files/{country}/work/clients/{client_interface}')
+                for i in range(int((await state.get_data())['chosen_tarif'])):
+                    send_file = open(f'/home/pp/vpn_service/config_files/{country}/work/clients/{client_interface}/{config_files[i]}', 'rb')
+                    await bot.send_document(call.from_user.id, send_file, caption=after_config_msg)
+                    send_file.close()
+                remove(f'/home/pp/vpn_service/config_files/{country}/work/wsc/{interfaces[0]}')
+                db.make_order(call.from_user.id, datetime.today(), int((await state.get_data())['chosen_tarif']),
+                              (await state.get_data())['chosen_country'], client_interface,
+                              int((await state.get_data())['chosen_duration']),
+                              datetime.today() + relativedelta(months=int((await state.get_data())['chosen_duration'])),
+                              price)
+                await call.answer(congrats_msg)
+            else:
+                await bot.send_photo(call.from_user.id, cfg.mustela, '<b>Привет {0.first_name}!</b>\n'
+                                     .format(call.from_user) + hello_new_user_msg, reply_markup=nav.client_main_menu)
+                await bot.send_message(cfg.ADMIN_ID, f'Недолёт ПП конфига с {country}')
+                await call.answer('Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее. '
+                                  'Техподдержка уже занимается этой проблемой.', show_alert=True)
+
         elif db.get_user_data(call.from_user.id)[8] < price:
             await call.answer(not_enaugh_money_msg, show_alert=True)
             await bot.send_photo(call.from_user.id, cfg.mustela, 'Привет {0.first_name}!\n'.format(call.from_user) +
@@ -160,7 +219,7 @@ async def cmd_choose_duration(call: types.callback_query, state: FSMContext):
 
 
 # Включает ПП на сервере
-async def enable_TP_user(client_id, country):
+async def enable_tp_user(client_id, country):
     if system(f'ssh root@WG_TRY -p 4522 /root/enable_TP_user.sh {country}') == 0:
         config_file = listdir(f'/home/pp/vpn_service/config_files/{country}/')
         send_file = open(f'/home/pp/vpn_service/config_files/{country}/{config_file[0]}', 'rb')
@@ -169,11 +228,8 @@ async def enable_TP_user(client_id, country):
         db.use_try_period(client_id, datetime.today() + relativedelta(days=3), country,
                           config_file[0])
         remove(f'/home/pp/vpn_service/config_files/{country}/{config_file[0]}')
-        # await call.answer('Ваши конфигурационные файлы уже на подлёте 🦇', show_alert=True)
         return 'Ваши конфигурационные файлы уже на подлёте 🦇'
     else:
-        # await call.answer('Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее. Техподдержка'
-        #                   ' уже занимается этой проблемой.', show_alert=True)
         await bot.send_photo(client_id, cfg.mustela, hello_new_user_msg, reply_markup=nav.client_main_menu)
         await bot.send_message(cfg.ADMIN_ID, f'Недолёт ПП конфига с {country}')
         return 'Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее.' \
@@ -187,25 +243,7 @@ async def cmd_client_country(call: types.callback_query):
             await call.answer('Вы уже использовали свой пробный период. 🤚')
         else:
             # Запустить на сервере скрипт enable_TP_user.sh
-            await call.answer(await enable_TP_user(call.from_user.id, call.data[8:]), show_alert=True)
-
-            # if system(f'ssh root@WG_TRY -p 4522 /root/enable_TP_user.sh {call.data[8:]}') == 0:
-            #     await call.answer('Ваши конфигурационные файлы уже на подлёте 🦇', show_alert=True)
-            #     config_file = listdir(f'/home/pp/vpn_service/config_files/{call.data[8:]}/')
-            #     send_file = open(f'/home/pp/vpn_service/config_files/{call.data[8:]}/{config_file[0]}', 'rb')
-            #     await bot.send_document(call.from_user.id, send_file, caption=after_config_msg)
-            #     send_file.close()
-            #     db.use_try_period(call.from_user.id, datetime.today() + relativedelta(days=3), call.data[8:],
-            #                       config_file[0])
-            #     remove(f'/home/pp/vpn_service/config_files/{call.data[8:]}/{config_file[0]}')
-            # else:
-            #     await call.answer('Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее. Техподдержка'
-            #                       ' уже занимается этой проблемой.', show_alert=True)
-            #     await bot.send_photo(call.from_user.id, cfg.mustela, 'Привет {0.first_name}!\n'.format(call.from_user) +
-            #                          hello_new_user_msg, reply_markup=nav.client_main_menu)
-            #     await bot.send_message(cfg.ADMIN_ID, f'Недолёт ПП конфига с {call.data[8:]}')
-
-
+            await call.answer(await enable_tp_user(call.from_user.id, call.data[8:]), show_alert=True)
     elif call.data == 'country_german':
         pass
     elif call.data == 'country_netherlands':
@@ -308,6 +346,7 @@ def register_client_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(cmd_choose_country, text_contains='country', state=OrderVpn.waiting_for_country)
     dp.register_callback_query_handler(cmd_client_partner, text_contains='partner')
     dp.register_callback_query_handler(cmd_client_office, text_contains='office')
+    dp.register_callback_query_handler(cmd_order_control, text_contains='order')
     dp.register_callback_query_handler(cmd_choose_tarif, text_contains='tarif', state=OrderVpn.waiting_for_tarif)
     dp.register_callback_query_handler(cmd_choose_duration, text_contains='duration',
                                        state=OrderVpn.waiting_for_duration)

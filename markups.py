@@ -81,11 +81,8 @@ btn_duration_24 = InlineKeyboardButton(text='Два года', callback_data='du
 btn_duration_36 = InlineKeyboardButton(text='Три года', callback_data='duration_36')
 btn_duration_back = InlineKeyboardButton(text='🔙 назад', callback_data='duration_back')
 
-# disable autoprolongation
-btn_dis_prolong = InlineKeyboardButton(text='Отключить автопродление', callback_data='order_disable')
 
-# activate order
-btn_activate_order = InlineKeyboardButton(text='Активировать', callback_data='order_activate')
+
 
 '''Клавиатуры Клиента'''
 # client_menu
@@ -105,6 +102,7 @@ client_office_menu.row(btn_pay)
 client_office_menu.row(btn_need_conf)
 client_office_menu.row(btn_my_vpn, btn_office_back)
 
+
 # client_partner
 def gen_partner_menu(ref_link):
     btn_share_link = InlineKeyboardButton(text='📣 Поделиться ссылкой', switch_inline_query=ref_link)
@@ -115,6 +113,7 @@ def gen_partner_menu(ref_link):
     client_partner_menu.insert(btn_take_money)
     client_partner_menu.insert(btn_partner_back)
     return client_partner_menu
+
 
 # client_countries
 country_menu = InlineKeyboardMarkup()
@@ -148,10 +147,29 @@ duration_menu.row(btn_duration_6, btn_duration_12)
 duration_menu.row(btn_duration_24, btn_duration_36)
 duration_menu.row(btn_duration_back)
 
-# order menu
-disable_prolong = InlineKeyboardMarkup()
-disable_prolong.insert(btn_dis_prolong)
 
+# order menu
+def disable_prolong(order_id):
+    # disable autoprolongation
+    btn_dis_prolong = InlineKeyboardButton(text='Отключить автопродление',
+                                           callback_data=f'order_disable_prolong_{order_id}')
+    disable_prolong_menu = InlineKeyboardMarkup()
+    disable_prolong_menu.insert(btn_dis_prolong)
+    return disable_prolong_menu
+
+
+def enable_prolong(order_id):
+    # enable autoprolongation
+    btn_en_prolong = InlineKeyboardButton(text='Включить автопродление',
+                                           callback_data=f'order_enable_prolong_{order_id}')
+    enable_prolong_menu = InlineKeyboardMarkup()
+    enable_prolong_menu.insert(btn_en_prolong)
+    return enable_prolong_menu
+
+
+
+# activate order
+btn_activate_order = InlineKeyboardButton(text='Активировать', callback_data='order_activate')
 activate_order = InlineKeyboardMarkup()
 activate_order.insert(btn_activate_order)
 

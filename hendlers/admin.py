@@ -40,7 +40,18 @@ async def edit_channel(message: types.Message):
                 await message.answer('Платежей нет')
 
 
+# async def get_user_data(message: types.Message):
+#     cms = chat_member_status(await bot.get_chat_member(chat_id=cfg.CHANNEL_NAME, user_id=message.from_user.id))
+#     if cms in ['administrator', 'creator']:
+#         if hasattr(message.forward_from, 'id'):
+#             print(message.forward_from)
+#             print(message.forward_from.id)
+#         else:
+#             print('У пользователя включен режим приватности при пересылке его сообщений')
+
+
 def register_admin_handlers(dp: Dispatcher):
     # dp.register_message_handler(cmd_client_main, text_contains='client')
     # dp.register_message_handler(cmd_client_help, text_contains='help')
     dp.register_message_handler(edit_channel, content_types='text', text_contains=cfg.BOT_NAME, chat_type='private')
+    # dp.register_message_handler(get_user_data, content_types='text', text_contains='данные', chat_type=['private', 'supergroup'])

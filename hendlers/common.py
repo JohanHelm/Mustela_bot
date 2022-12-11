@@ -20,8 +20,7 @@ async def cmd_test(message: types.Message):  # если команда/кноп�
     await message.answer(message.chat.type)
     # await bot.send_photo(cfg.CHANNEL_ID, cfg.mustela, 'hello', nav.to_bot_and_sup)
     # await message.answer(message.forward_from_message_id)
-    await message.answer(message.forward_sender_name)
-
+    # await message.answer(message.forward_sender_name)
     # print(message.get_args())
 
 
@@ -34,14 +33,14 @@ async def cmd_test(message: types.Message):  # если команда/кноп�
 # @dp.message_handler(commands="start", commands_prefix="/", chat_type=['private'])
 async def cmd_start(message: types.Message):
     cms = chat_member_status(await bot.get_chat_member(chat_id=cfg.CHANNEL_NAME, user_id=message.from_user.id))
-    if cms == 'member': # and message.chat.type == 'private':
+    if cms == 'member':  # and message.chat.type == 'private':
         if not db.user_exists(message.from_user.id):  # проверяет есть ли пользователь в базе, если нет добавляет
             db.add_user(message.from_user.id, message.from_user.full_name, message.from_user.language_code,
                         message.from_user.mention, await get_start_link(message.from_user.id), message.get_args())
         await bot.send_photo(message.from_user.id, cfg.mustela, '<b>Привет {0.first_name}!</b>\n'
                              .format(message.from_user) + hello_new_user_msg, reply_markup=nav.client_main_menu)
 
-    elif cms in ['administrator', 'creator']: # and message.chat.type == 'private':
+    elif cms in ['administrator', 'creator']:  # and message.chat.type == 'private':
         if not db.user_exists(message.from_user.id):  # проверяет есть ли пользователь в базе, если нет добавляет
             db.add_user(message.from_user.id, message.from_user.full_name, message.from_user.language_code,
                         message.from_user.mention, await get_start_link(message.from_user.id), message.get_args())
@@ -52,7 +51,7 @@ async def cmd_start(message: types.Message):
         #                      '<b>Привет {0.first_name}!</b>\n'.format(message.from_user) + hello_new_user_msg,
         #                      reply_markup=nav.client_main_menu)
         await bot_queue.waiter_from_queue()
-    elif cms == 'left': # and message.chat.type == 'private':
+    elif cms == 'left':  # and message.chat.type == 'private':
         if not db.user_exists(message.from_user.id):  # проверяет есть ли пользователь в базе, если нет добавляет
             db.add_user(message.from_user.id, message.from_user.full_name, message.from_user.language_code,
                         message.from_user.mention, await get_start_link(message.from_user.id), message.get_args())
