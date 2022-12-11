@@ -81,9 +81,6 @@ btn_duration_24 = InlineKeyboardButton(text='Два года', callback_data='du
 btn_duration_36 = InlineKeyboardButton(text='Три года', callback_data='duration_36')
 btn_duration_back = InlineKeyboardButton(text='🔙 назад', callback_data='duration_back')
 
-
-
-
 '''Клавиатуры Клиента'''
 # client_menu
 client_main_menu = InlineKeyboardMarkup()
@@ -161,17 +158,17 @@ def disable_prolong(order_id):
 def enable_prolong(order_id):
     # enable autoprolongation
     btn_en_prolong = InlineKeyboardButton(text='Включить автопродление',
-                                           callback_data=f'order_enable_prolong_{order_id}')
+                                          callback_data=f'order_enable_prolong_{order_id}')
     enable_prolong_menu = InlineKeyboardMarkup()
     enable_prolong_menu.insert(btn_en_prolong)
     return enable_prolong_menu
 
 
-
-# activate order
-btn_activate_order = InlineKeyboardButton(text='Активировать', callback_data='order_activate')
-activate_order = InlineKeyboardMarkup()
-activate_order.insert(btn_activate_order)
+def activate_order(odrer_id):
+    btn_activate_order = InlineKeyboardButton(text='Активировать', callback_data=f'order_activate_{odrer_id}')
+    activate_order_menu = InlineKeyboardMarkup()
+    activate_order_menu.insert(btn_activate_order)
+    return activate_order_menu
 
 
 def invoice_menu(pay_link):

@@ -17,9 +17,10 @@ def try_period_lasts_msg(expires_at, country):
     return f'Ваш пробный период активен до {expires_at}, вы выбрали VPN в {country.capitalize()}'
 
 
-def order_data_msg(order_num, tarif, country, expires_at):
+def order_data_msg(order_num, tarif, country, expires_at, duration):
     return f'Номер заказа: <b>{order_num}</b>\nТариф на <b>{tarif}</b> устройств\nСтрана:' \
-           f' <b>{country.capitalize()}</b>\nАктивен до: <b>{expires_at}</b>'
+           f' <b>{country.capitalize()}</b>\nАктивен до: <b>{expires_at}</b>\nПродолжительность <b>{duration}</b>' \
+           f' месяцев'
 
 
 def user_data_msg(user_data, try_period):

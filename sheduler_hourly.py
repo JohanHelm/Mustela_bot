@@ -28,7 +28,6 @@ async def command_for_bot(command_text) -> None:
 
 async def block_payed_config(pcd):
     # print(f'Заблокировать интерфейс {pcd[7]} клиента {pcd[1]} на сервере {pcd[4]}. ОТСЮДА!!!')
-    db.mark_order_inactive(pcd[0])
     if system(f'ssh root@WG_WORK -p 4522 /root/disable_payed_user.sh {pcd[7]}') == 0:
         # сообщение клиенту о блокировке его интерфейса
         await command_for_bot((str(pcd) + ' block_interface').replace('(', '').replace(')', '').replace(',', '')

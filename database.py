@@ -123,4 +123,13 @@ class Database:
         with self.connection:
             self.cursor.execute("UPDATE orders SET prolong = ? WHERE id = ?", (prolong, order_id,))
 
+    def get_order_data(self, order_id):
+        with self.connection:
+            return self.cursor.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+
+    def activate_order(self, expires_at, order_id, on_accaunt, price, customer_id):
+        with self.connection:
+            self.cursor.execute("UPDATE orders SET active = ?, expires_at = ? WHERE id = ?", (1, expires_at, order_id,))
+            self.cursor.execute("UPDATE users SET on_accaunt = ? WHERE user_id = ?", (on_accaunt - price, customer_id,))
+
 db = Database('vpn_service.db')

@@ -1,4 +1,3 @@
-import calendar
 from datetime import datetime
 from os import listdir, system, remove
 from random import sample
@@ -7,7 +6,7 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from dateutil.relativedelta import relativedelta
-from asyncio import sleep
+
 import config as cfg
 import markups as nav
 import payments as pm
@@ -83,17 +82,17 @@ async def cmd_client_office(call: types.callback_query, state: FSMContext):
                 if order[9]:
                     if order[11]:
                         await bot.send_message(call.from_user.id,
-                                           order_data_msg(order[0], order[3], order[4], order[10][:-7]),
-                                           reply_markup=nav.disable_prolong(order[0]))
+                                               order_data_msg(order[0], order[3], order[4], order[10][:-7], order[8]),
+                                               reply_markup=nav.disable_prolong(order[0]))
                     else:
                         await bot.send_message(call.from_user.id,
-                                               order_data_msg(order[0], order[3], order[4], order[10][:-7]),
+                                               order_data_msg(order[0], order[3], order[4], order[10][:-7], order[8]),
                                                reply_markup=nav.enable_prolong(order[0]))
                     active_vpn = True
                 else:
                     await bot.send_message(call.from_user.id,
-                                           order_data_msg(order[0], order[3], order[4], order[10][:-7]),
-                                           reply_markup=nav.activate_order)
+                                           order_data_msg(order[0], order[3], order[4], order[10][:-7], order[8]),
+                                           reply_markup=nav.activate_order(order[0]))
         if not active_vpn:
             await call.answer(no_try_no_order_msg, show_alert=True)
     elif call.data == 'office_back':
@@ -120,19 +119,24 @@ async def cmd_client_office(call: types.callback_query, state: FSMContext):
 async def cmd_order_control(call: types.callback_query):
     if call.data[:21] == 'order_disable_prolong':
         db.set_order_prolong(0, call.data[22:])
-        await call.answer('Автопродление отключено.')
+        await call.answer(f'Автопродление заказа {call.data[22:]} отключено.')
     elif call.data[:20] == 'order_enable_prolong':
         db.set_order_prolong(1, call.data[21:])
-        await call.answer('Автопродление включено.')
-    elif call.data == 'order_activate':
-        print('activate')
-        # odrer_id
-        # duration
-        # tarif
-        # price
-        # user_id
-        # on account
-
+        await call.answer(f'Автопродление заказа {call.data[21:]} включено.')
+    elif call.data[:14] == 'order_activate':
+        order_data = db.get_order_data(call.data[15:])
+        user_data = db.get_user_data(call.from_user.id)
+        price = db.check_price(order_data[3], order_data[8])[0]
+        if user_data[8] >= price and user_data[12] == 0:
+            if system(f'ssh root@WG_WORK -p 4522 /root/enable_payed_user.sh {order_data[7]}') == 0:
+                db.activate_order(datetime.today() + relativedelta(months=order_data[8]), order_data[0], user_data[8],
+                                  price, call.from_user.id)
+            else:
+                await call.answer('Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее.'
+                                  ' Техподдержка уже занимается этой проблемой.')
+                await bot.send_message(cfg.ADMIN_ID, f'Сервер {order_data[4]} недоступен')
+        else:
+            await call.answer(f'Недостаточно средств для активации выбранного заказа. Пополните пожалуйста счёт.')
 
 
 # @dp.callback_query_handler(text_contains='partner')
@@ -192,7 +196,8 @@ async def cmd_choose_duration(call: types.callback_query, state: FSMContext):
             if system(f'ssh root@WG_WORK -p 4522 /root/enable_payed_user.sh {client_interface}') == 0:
                 config_files = listdir(f'/home/pp/vpn_service/config_files/{country}/work/clients/{client_interface}')
                 for i in range(int((await state.get_data())['chosen_tarif'])):
-                    send_file = open(f'/home/pp/vpn_service/config_files/{country}/work/clients/{client_interface}/{config_files[i]}', 'rb')
+                    send_file = open(f'/home/pp/vpn_service/config_files/{country}/work/clients/{client_interface}/'
+                                     f'{config_files[i]}', 'rb')
                     await bot.send_document(call.from_user.id, send_file, caption=after_config_msg)
                     send_file.close()
                 remove(f'/home/pp/vpn_service/config_files/{country}/work/wsc/{interfaces[0]}')
