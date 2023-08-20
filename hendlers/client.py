@@ -377,25 +377,20 @@ async def cmd_client_location(call: types.callback_query):
         if db.check_try_period(call.from_user.id):
             await call.answer('Вы уже использовали свой пробный период. 🤚')
         else:
-            if system(f'ssh root@{call.data[9:]}_TRY_0 -p 4522 /root/enable_TP_user.sh {call.data[9:]}') == 0:
-                config_file = listdir(f'/root/{call.data[9:]}/try/0')
+            config_file = sorted(listdir(f'/root/{call.data[9:]}/try/0'))[0]
+            if system(f'ssh root@{call.data[9:]}_TRY_0 -p 4522 /root/enable_TP_user.sh {config_file}') == 0:
                 db.use_try_period(call.from_user.id, datetime.today() + relativedelta(days=3), call.data[9:],
-                                  config_file[0], call.from_user.full_name)
-                rename(fr'/root/{call.data[9:]}/try/0/{config_file[0]}',
-                       fr'/root/{call.data[9:]}/try/0/{call.data[9:]}_try.conf')
-                config_file = listdir(f'/root/{call.data[9:]}/try/0')
-                send_file = open(f'/root/{call.data[9:]}/try/0/{config_file[0]}', 'rb')
+                                  config_file, call.from_user.full_name)
+                send_file = open(f'/root/{call.data[9:]}/try/0/{config_file}', 'rb')
                 await bot.send_document(call.from_user.id, send_file, caption=after_config_msg)
                 send_file.close()
-                remove(f'/root/{call.data[9:]}/try/0/{config_file[0]}')
+                remove(f'/root/{call.data[9:]}/try/0/{config_file}')
             else:
-                await call.answer('Cервер недоступен. Техподдержка уже занимается этой проблемой', show_alert=True)
-                await bot.send_photo(call.from_user.id, cfg.mustela, hello_new_user_msg,
-                                     reply_markup=nav.client_main_menu)
-                await bot.send_message(cfg.ADMIN_ID, f'Недолёт ПП конфига с {call.data[9:]}')
-                # return 'Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее.' \
-                #        ' Техподдержка уже занимается этой проблемой.'
-
+               await call.answer('Cервер недоступен. Техподдержка уже занимается этой проблемой', show_alert=True)
+               await bot.send_photo(call.from_user.id, cfg.mustela, hello_new_user_msg,
+                                    reply_markup=nav.client_main_menu)
+               await bot.send_message(cfg.ADMIN_ID, f'Недолёт ПП конфига с {call.data[9:]}')
+            
 
 # @dp.callback_query_handler(text_contains='method')
 async def cmd_client_method(call: types.callback_query, state: FSMContext):
