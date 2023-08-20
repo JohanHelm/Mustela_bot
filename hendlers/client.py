@@ -339,16 +339,6 @@ async def cmd_choose_duration(call: types.callback_query, state: FSMContext):
                 await call.answer('Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее. '
                                   'Техподдержка уже занимается этой проблемой.', show_alert=True)
 
-            # interfaces = listdir(f'/home/pp/vpn_service/config_files/finland/work/wsc')
-            # client_interface = interfaces[0][10:19]
-            # config_files = listdir(f'/home/pp/vpn_service/config_files/finland/work/clients/{client_interface}')
-            # for i in range(int((await state.get_data())['chosen_tarif'])):
-            #     send_file = open(f'/home/pp/vpn_service/config_files/finland/work/clients/{client_interface}/'
-            #                      f'{config_files[i]}', 'rb')
-            #     await bot.send_document(call.from_user.id, send_file, caption=after_config_msg,
-            #                             reply_markup=nav.after_config_menu)
-            #     send_file.close()
-            # await bot.delete_message(call.from_user.id, call.message.message_id)
         elif not can_buy[0] and not can_buy[1]:
             await call.answer(not_enaugh_money_msg, show_alert=True)
             await call.bot.edit_message_media(
