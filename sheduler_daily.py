@@ -1,68 +1,70 @@
-
 from asyncio import run, gather, sleep
 from datetime import datetime, timedelta
-# from time import time
-from database import db
-from aio_pika import Message, connect
 
+from aiogram import Bot
+from aiogram.utils.exceptions import BotBlocked
+
+import config as cfg
+from database import db
+from infmsg import (one_d_left_try_period_msg,
+                    two_d_left_try_period_msg,
+                    days_payed_left_msg,
+                    )
 
 '''ВЫПОЛНЯЕТСЯ РАЗ В ДЕНЬ'''
-
-# start = time()  # точка отсчета времени
-
 
 # ПП - пробный период
 # ОК - оплаченный конфиг
 # БД - база данных.
-
-
-# Создаёт очередь и отправляет туда сообщения
-async def command_for_bot(command_text) -> None:
-    connection = await connect("amqp://guest:guest@localhost/")
-    async with connection:
-        channel = await connection.channel()
-        queue = await channel.declare_queue("to_bot_queue")
-        await channel.default_exchange.publish(Message(bytes(command_text, 'utf-8')), routing_key=queue.name, )
+bot = Bot(token=cfg.TOKEN, parse_mode="HTML")
 
 
 # Напоминалка пользователю об окончании ПП
 async def try_period_reminder():
     tpd = db.try_period_data()
-    for i in range(len(tpd)):
-        if datetime.today() <= datetime.fromisoformat(tpd[i][2]) <= datetime.today() + timedelta(days=1):
-            # print(f'Осталось менее суток до окончания ПП: ОЧЕРЕДЬ {tpd[0]}')
-            tpd_in_progress = list(tpd[i])
-            for j in range(len(tpd[i])):
-                tpd_in_progress[j] = str(tpd_in_progress[j])
-            await command_for_bot('For_User ' + 'one_day_left_try_period ' + ' '.join(tpd_in_progress))
-        elif datetime.today() + timedelta(days=1) <= datetime.fromisoformat(tpd[i][2]) \
+    for i, try_period_user in enumerate(tpd):
+        if datetime.today() <= datetime.fromisoformat(try_period_user[2]) <= datetime.today() + timedelta(days=1):
+            try:
+                await bot.send_message(try_period_user[0], one_d_left_try_period_msg)
+                if db.get_user_data(try_period_user[0])[5] != 1:
+                    db.set_active(try_period_user[0], 1)
+            except BotBlocked:
+                db.set_active(try_period_user[0], 0)
+        elif datetime.today() + timedelta(days=1) <= datetime.fromisoformat(try_period_user[2]) \
                 <= datetime.today() + timedelta(days=2):
-            # print(f'Осталось менее двух суток до окончания ПП: ОЧЕРЕДЬ {tpd[0]}')
-            tpd_in_progress = list(tpd[i])
-            for j in range(len(tpd[i])):
-                tpd_in_progress[j] = str(tpd_in_progress[j])
-            await command_for_bot('For_User ' + 'two_days_left_try_period ' + ' '.join(tpd_in_progress))
-        elif datetime.fromisoformat(tpd[i][2]) > datetime.today() + timedelta(days=2):
+            try:
+                await bot.send_message(try_period_user[0], two_d_left_try_period_msg)
+                if db.get_user_data(try_period_user[0])[5] != 1:
+                    db.set_active(try_period_user[0], 1)
+            except BotBlocked:
+                db.set_active(try_period_user[0], 0)
+        elif datetime.fromisoformat(try_period_user[2]) > datetime.today() + timedelta(days=2):
             break
         await sleep(2)
 
 
 async def payed_config_reminder():
     pcd = db.payed_config_data()
-    for i in range(len(pcd)):
-        if datetime.today() <= datetime.fromisoformat(pcd[i][10]) <= datetime.today() + timedelta(days=1):
-            # print(f'Осталось менее суток до окончания ОК: ОЧЕРЕДЬ {pcd[i]}')
-            pcd_in_progress = list(pcd[i])
-            for j in range(len(pcd[i])):
-                pcd_in_progress[j] = str(pcd_in_progress[j])
-            await command_for_bot('For_User ' + 'one_day_payed_left ' + ' '.join(pcd_in_progress))
-        elif datetime.today() + timedelta(days=1) <= datetime.fromisoformat(pcd[i][10]) \
+    for i, payed_user in enumerate(pcd):
+        if datetime.today() <= datetime.fromisoformat(payed_user[10]) <= datetime.today() + timedelta(days=1):
+            try:
+                await bot.send_message(payed_user[1],
+                                       days_payed_left_msg(1, payed_user[0], payed_user[10], payed_user[5],
+                                                           payed_user[3]))
+                if db.get_user_data(payed_user[1])[5] != 1:
+                    db.set_active(payed_user[1], 1)
+            except BotBlocked:
+                db.set_active(payed_user[1], 0)
+        elif datetime.today() + timedelta(days=1) <= datetime.fromisoformat(payed_user[10]) \
                 <= datetime.today() + timedelta(days=2):
-            # print(f'Осталось менее двух суток до окончания ОК: ОЧЕРЕДЬ {pcd[i]}')
-            pcd_in_progress = list(pcd[i])
-            for j in range(len(pcd[i])):
-                pcd_in_progress[j] = str(pcd_in_progress[j])
-            await command_for_bot('For_User ' + 'two_days_payed_left ' + ' '.join(pcd_in_progress))
+            try:
+                await bot.send_message(payed_user[1],
+                                       days_payed_left_msg(2, payed_user[0], payed_user[10], payed_user[5],
+                                                           payed_user[3]))
+                if db.get_user_data(payed_user[1])[5] != 1:
+                    db.set_active(payed_user[1], 1)
+            except BotBlocked:
+                db.set_active(payed_user[1], 0)
         elif datetime.fromisoformat(pcd[i][10]) > datetime.today() + timedelta(days=2):
             break
         await sleep(2)
@@ -70,9 +72,7 @@ async def payed_config_reminder():
 
 async def starter():
     await gather(try_period_reminder(), payed_config_reminder())
+    await bot.close()
 
 
 run(starter())
-
-# end = time() - start
-# print(end)

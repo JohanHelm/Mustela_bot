@@ -181,3 +181,4 @@ class Database:
 
 
 db = Database('vpn_service.db')
+

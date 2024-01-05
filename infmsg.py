@@ -53,7 +53,7 @@ def invoice_data_msg(comment, summ, method):
 
 
 def block_payed_config_msg(expire_date, country, tarif):
-    tarif_name = {'2': '⚡ Тариф базовый ⚡', '5': '⚡ Тариф оптимальный ⚡', '10': '⚡ Тариф большая семья ⚡'}
+    tarif_name = {1: '⚡ Тариф простой ⚡', 2: '⚡ Тариф базовый ⚡', 5: '⚡ Тариф оптимальный ⚡', 10: '⚡ Тариф большая семья ⚡'}
     countries = {'Hels': '🇫🇮 Хельсинки', 'Falc': '🇩🇪 Фалькенштайн', 'Amst': '🇳🇱 Амстердам', 'Vien': '🇦🇹 Вена',
                  'Toro': '🇦 Торонто', 'Lond': '🇬🇧 Лондон', 'Madr': '🇪🇸 Мадрид', 'Atla': '🇺🇸 Атланта'}
     return f'Ваша подписка на {tarif_name[tarif]} в локации {countries[country]} оплачена до {expire_date} ' \
@@ -63,16 +63,16 @@ def block_payed_config_msg(expire_date, country, tarif):
 
 
 def days_payed_left_msg(days, order_id, expire_date, country, tarif):
-    tarif_name = {'2': '⚡ Тариф базовый ⚡', '5': '⚡ Тариф оптимальный ⚡', '10': '⚡ Тариф большая семья ⚡'}
+    tarif_name = {1: '⚡ Тариф простой ⚡', 2: '⚡ Тариф базовый ⚡', 5: '⚡ Тариф оптимальный ⚡', 10: '⚡ Тариф большая семья ⚡'}
     countries = {'Hels': '🇫🇮 Хельсинки', 'Falc': '🇩🇪 Фалькенштайн', 'Amst': '🇳🇱 Амстердам', 'Vien': '🇦🇹 Вена',
                  'Toro': '🇦 Торонто', 'Lond': '🇬🇧 Лондон', 'Madr': '🇪🇸 Мадрид', 'Atla': '🇺🇸 Атланта'}
-    if days == '1':
+    if days == 1:
         return f'Осталось менее суток до окончания вашей подписки № {order_id} на {tarif_name[tarif]} в локации ' \
                f'{countries[country]}. Подписка активна до {expire_date}. ' \
                f'Для дальнейшего использования ВПН <a href="https://t.me/mustela_vpn/98">пополните счёт</a>\n' \
                f' и <a href="https://t.me/mustela_vpn/88">приобретите подписку</a>.'
 
-    elif days == '2':
+    elif days == 2:
         return f'Осталось менее двух суток до окончания вашей подписки № {order_id} на {tarif_name[tarif]} в локации ' \
                f'{countries[country]}. Подписка активна до {expire_date}. ' \
                f'Для дальнейшего использования ВПН <a href="https://t.me/mustela_vpn/98">пополните счёт</a>\n' \
