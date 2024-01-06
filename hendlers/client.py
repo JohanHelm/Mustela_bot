@@ -38,6 +38,7 @@ class DemandPartnerMoney(StatesGroup):
 
 # main_menu
 async def cmd_client_main(call: types.callback_query, state: FSMContext):
+
     if call.data == 'client_choose_vpn':
         await call.bot.edit_message_media(types.InputMediaPhoto(cfg.mustela, choose_tarif_msg), call.from_user.id,
                                           call.message.message_id, reply_markup=nav.tarif_menu)
@@ -309,35 +310,44 @@ async def cmd_choose_duration(call: types.callback_query, state: FSMContext):
         can_buy = await check_can_buy(user_data[8], user_data[12], user_data[14], price)
         if can_buy[0]:
             country = (await state.get_data())['chosen_country']
-            servers_amount = len(listdir(f'/root/{country}/work'))
-            free_work_server = db.pick_work_server(country, servers_amount)
-            interfaces = listdir(f'/root/{country}/work/{free_work_server}/wsc')
+            # servers_amount = len(listdir(f'/root/{country}/work'))
+            # free_work_server = db.pick_work_server(country, servers_amount)
+            free_work_server = 'Holl_Amst'
+            interfaces = listdir(f'/root/wsc')
             client_interface = interfaces[0][10:19]
-            if system(f'ssh root@{country}_WORK_{free_work_server} -p 4522 /root/enable_payed_user.sh '
-                      f'{client_interface}') == 0:
-                config_files = listdir(f'/root/{country}/work/{free_work_server}/clients/{client_interface}')
-                for i in range(int((await state.get_data())['chosen_tarif'])):
-                    send_file = open(f'/root/{country}/work/{free_work_server}/clients/{client_interface}/'
-                                     f'{config_files[i]}', 'rb')
-                    await bot.send_document(call.from_user.id, send_file, caption=after_config_msg) #,
-                                            # reply_markup=nav.after_config_menu)
-                    send_file.close()
-                await bot.delete_message(call.from_user.id, call.message.message_id)
-                remove(f'/root/{country}/work/{free_work_server}/wsc/{interfaces[0]}')
-                db.make_order(call.from_user.id, datetime.today(), int((await state.get_data())['chosen_tarif']),
+
+            system(f"/root/enable_payed_user.sh {client_interface}")
+            config_files = listdir(f'/root/clients/{client_interface}')
+            for i in range(int((await state.get_data())['chosen_tarif'])):
+                send_file = open(f'/root/clients/{client_interface}/{config_files[i]}', 'rb')
+                await bot.send_document(call.from_user.id, send_file, caption=after_config_msg)
+                send_file.close()
+
+            # if system(f'ssh root@{country}_WORK_{free_work_server} -p 4522 /root/enable_payed_user.sh '
+            #           f'{client_interface}') == 0:
+            #     config_files = listdir(f'/root/{country}/work/{free_work_server}/clients/{client_interface}')
+            #     for i in range(int((await state.get_data())['chosen_tarif'])):
+            #         send_file = open(f'/root/{country}/work/{free_work_server}/clients/{client_interface}/'
+            #                          f'{config_files[i]}', 'rb')
+            #         await bot.send_document(call.from_user.id, send_file, caption=after_config_msg) #,
+            #                                 # reply_markup=nav.after_config_menu)
+            #         send_file.close()
+            await bot.delete_message(call.from_user.id, call.message.message_id)
+            remove(f'/root/wsc/{interfaces[0]}')
+            db.make_order(call.from_user.id, datetime.today(), int((await state.get_data())['chosen_tarif']),
                               (await state.get_data())['chosen_country'], free_work_server, client_interface,
                               int((await state.get_data())['chosen_duration']),
                               datetime.today() + relativedelta(months=int((await state.get_data())['chosen_duration'])),
                               can_buy[1], can_buy[2], call.from_user.full_name)
-                await call.answer(congrats_msg)
-            else:
-                await call.bot.edit_message_media(
-                    types.InputMediaPhoto(cfg.mustela, 'Привет {0.first_name}!\n'.format(call.from_user) +
-                                          hello_new_user_msg), call.from_user.id, call.message.message_id,
-                    reply_markup=nav.client_main_menu)
-                await bot.send_message(cfg.ADMIN_ID, f'Недолёт ПП конфига с {country}_{free_work_server}')
-                await call.answer('Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее. '
-                                  'Техподдержка уже занимается этой проблемой.', show_alert=True)
+            await call.answer(congrats_msg)
+            # else:
+            #     await call.bot.edit_message_media(
+            #         types.InputMediaPhoto(cfg.mustela, 'Привет {0.first_name}!\n'.format(call.from_user) +
+            #                               hello_new_user_msg), call.from_user.id, call.message.message_id,
+            #         reply_markup=nav.client_main_menu)
+            #     await bot.send_message(cfg.ADMIN_ID, f'Недолёт ПП конфига с {country}_{free_work_server}')
+            #     await call.answer('Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее. '
+            #                       'Техподдержка уже занимается этой проблемой.', show_alert=True)
 
         elif not can_buy[0] and not can_buy[1]:
             await call.answer(not_enaugh_money_msg, show_alert=True)
@@ -367,19 +377,27 @@ async def cmd_client_location(call: types.callback_query):
         if db.check_try_period(call.from_user.id):
             await call.answer('Вы уже использовали свой пробный период. 🤚')
         else:
-            config_file = sorted(listdir(f'/root/{call.data[9:]}/try/0'))[0]
-            if system(f'ssh root@{call.data[9:]}_TRY_0 -p 4522 /root/enable_TP_user.sh {config_file}') == 0:
-                db.use_try_period(call.from_user.id, datetime.today() + relativedelta(days=3), call.data[9:],
-                                  config_file, call.from_user.full_name)
-                send_file = open(f'/root/{call.data[9:]}/try/0/{config_file}', 'rb')
-                await bot.send_document(call.from_user.id, send_file, caption=after_config_msg)
-                send_file.close()
-                remove(f'/root/{call.data[9:]}/try/0/{config_file}')
-            else:
-               await call.answer('Cервер недоступен. Техподдержка уже занимается этой проблемой', show_alert=True)
-               await bot.send_photo(call.from_user.id, cfg.mustela, hello_new_user_msg,
-                                    reply_markup=nav.client_main_menu)
-               await bot.send_message(cfg.ADMIN_ID, f'Недолёт ПП конфига с {call.data[9:]}')
+            config_file = sorted(listdir(f'/root/try_clients'))[0]
+            system(f"/root/enable_TP_user.sh {config_file}")
+            db.use_try_period(call.from_user.id, datetime.today() + relativedelta(days=3), call.data[9:],
+                              config_file, call.from_user.full_name)
+            send_file = open(f'/root/try_clients/{config_file}', 'rb')
+            await bot.send_document(call.from_user.id, send_file, caption=after_config_msg)
+            send_file.close()
+            remove(f'/root/try_clients/{config_file}')
+
+            # if system(f'ssh root@{call.data[9:]}_TRY_0 -p 4522 /root/enable_TP_user.sh {config_file}') == 0:
+            #     db.use_try_period(call.from_user.id, datetime.today() + relativedelta(days=3), call.data[9:],
+            #                       config_file, call.from_user.full_name)
+            #     send_file = open(f'/root/{call.data[9:]}/try/0/{config_file}', 'rb')
+            #     await bot.send_document(call.from_user.id, send_file, caption=after_config_msg)
+            #     send_file.close()
+            #     remove(f'/root/{call.data[9:]}/try/0/{config_file}')
+            # else:
+            #    await call.answer('Cервер недоступен. Техподдержка уже занимается этой проблемой', show_alert=True)
+            #    await bot.send_photo(call.from_user.id, cfg.mustela, hello_new_user_msg,
+            #                         reply_markup=nav.client_main_menu)
+            #    await bot.send_message(cfg.ADMIN_ID, f'Недолёт ПП конфига с {call.data[9:]}')
             
 
 # @dp.callback_query_handler(text_contains='method')

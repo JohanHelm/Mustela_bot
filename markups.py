@@ -99,7 +99,7 @@ btn_location10 = InlineKeyboardButton(text='🇺🇸 Атланта', callback_d
 btn_location_back = InlineKeyboardButton(text='🔙 Назад', callback_data='location_back')
 
 location_menu = InlineKeyboardMarkup()
-location_menu.row(btn_location1)
+location_menu.row(btn_location3)
 # location_menu.row(btn_location1, btn_location2)
 # location_menu.row(btn_location3, btn_location10)
 # location_menu.row(btn_location5, btn_location6)
@@ -121,7 +121,7 @@ btn_country10 = InlineKeyboardButton(text='🇺🇸 Атланта', callback_da
 btn_country_back = InlineKeyboardButton(text='🔙 Назад', callback_data='country_back')
 
 country_menu = InlineKeyboardMarkup()
-country_menu.row(btn_country1)
+country_menu.row(btn_country3)
 # country_menu.row(btn_country1, btn_country2)
 # country_menu.row(btn_country3, btn_country10)
 # country_menu.row(btn_country5, btn_country6)

@@ -3,7 +3,7 @@ from os import system
 
 import config as cfg
 import markups as nav
-from create_bot import bot  #, chat_member_status
+from create_bot import bot
 from database import db
 from infmsg import user_data_msg, user_orders_msg, user_income_msg, show_all_users_msg, show_all_tp_msg, \
     show_all_orders_msg, show_all_incomes_msg
@@ -59,12 +59,8 @@ async def show_all(call: types.callback_query):
             await bot.send_message(cfg.ADMIN_ID, show_all_incomes_msg(income))
     elif call.data == 'show_all_restart_bot':
         system('systemctl restart Mu-bot.service')
-        # system('pwd')
 
 
 def register_admin_handlers(dp: Dispatcher):
-    # dp.register_message_handler(cmd_client_main, text_contains='client')
-    # dp.register_message_handler(cmd_client_help, text_contains='help')
-    dp.register_message_handler(admin_functional, content_types='text', text_contains=cfg.BOT_NAME)  # , chat_type='private')
+    dp.register_message_handler(admin_functional, content_types='text', text_contains=cfg.BOT_NAME)
     dp.register_callback_query_handler(show_all, text_contains='show_all')
-    # dp.register_message_handler(get_user_data, content_types='text', text_contains='данные', chat_type=['private', 'supergroup'])
