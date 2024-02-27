@@ -314,7 +314,7 @@ async def cmd_choose_duration(call: types.callback_query, state: FSMContext):
             # free_work_server = db.pick_work_server(country, servers_amount)
             free_work_server = 'Holl_Amst'
             interfaces = listdir(f'/root/wsc')
-            client_interface = interfaces[0][10:19]
+            client_interface = interfaces[0][10:20]
 
             system(f"/root/enable_payed_user.sh {client_interface}")
             config_files = listdir(f'/root/clients/{client_interface}')
@@ -332,7 +332,7 @@ async def cmd_choose_duration(call: types.callback_query, state: FSMContext):
             #         await bot.send_document(call.from_user.id, send_file, caption=after_config_msg) #,
             #                                 # reply_markup=nav.after_config_menu)
             #         send_file.close()
-            await bot.delete_message(call.from_user.id, call.message.message_id)
+            # await bot.delete_message(call.from_user.id, call.message.message_id)
             remove(f'/root/wsc/{interfaces[0]}')
             db.make_order(call.from_user.id, datetime.today(), int((await state.get_data())['chosen_tarif']),
                               (await state.get_data())['chosen_country'], free_work_server, client_interface,
