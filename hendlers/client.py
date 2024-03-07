@@ -1,5 +1,5 @@
 from datetime import datetime
-from os import listdir, system, remove, rename
+from os import listdir, system, remove
 from random import sample
 import asyncio
 import math
@@ -145,10 +145,12 @@ async def cmd_client_office(call: types.callback_query, state: FSMContext):
         if db.check_orders(call.from_user.id):
             for order in db.check_orders(call.from_user.id):
                 if order[9]:
-                    config_files = listdir(f'/root/{order[4]}_{order[5]}/work/{order[6]}/clients/{order[7]}')
+                    # config_files = listdir(f'/root/{order[4]}_{order[5]}/work/{order[6]}/clients/{order[7]}')
+                    config_files = listdir(f'/root/clients/{order[7]}')
                     for i in range(int(order[3])):
-                        send_file = open(
-                            f'/root/{order[4]}_{order[5]}/work/{order[6]}/clients/{order[7]}/{config_files[i]}', 'rb')
+                        # send_file = open(
+                        #     f'/root/{order[4]}_{order[5]}/work/{order[6]}/clients/{order[7]}/{config_files[i]}', 'rb')
+                        send_file = open(f'/root/clients/{order[7]}/{config_files[i]}', 'rb')
                         await bot.send_document(call.from_user.id, send_file, caption=after_config_msg)
                         send_file.close()
                 else:
@@ -228,15 +230,16 @@ async def cmd_order_control(call: types.callback_query):
         price = db.check_price(order_data[3], order_data[8])[0]
         can_buy = await check_can_buy(user_data[8], user_data[12], user_data[14], price)
         if can_buy[0]:
-            if system(f'ssh root@{order_data[4]}_{order_data[5]}_WORK_{order_data[6]} -p 4522 '
-                      f'/root/enable_payed_user.sh {order_data[7]}') == 0:
-                db.activate_order(datetime.today() + relativedelta(months=order_data[8]), order_data[0], can_buy[1],
-                                  can_buy[2], call.from_user.id)
-                await call.answer(f'Ваш заказ номер {order_data[0]} успешно активирован')
-            else:
-                await call.answer('Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее.'
-                                  ' Техподдержка уже занимается этой проблемой.')
-                await bot.send_message(cfg.ADMIN_ID, f'Сервер {order_data[4:6]} недоступен')
+            # if system(f'ssh root@{order_data[4]}_{order_data[5]}_WORK_{order_data[6]} -p 4522 '
+            #           f'/root/enable_payed_user.sh {order_data[7]}') == 0:
+            #     db.activate_order(datetime.today() + relativedelta(months=order_data[8]), order_data[0], can_buy[1],
+            #                       can_buy[2], call.from_user.id)
+            #     await call.answer(f'Ваш заказ номер {order_data[0]} успешно активирован')
+            # else:
+            #     await call.answer('Из-за неполадок сети связь с сервером отсутствует. Попробуйте позднее.'
+            #                       ' Техподдержка уже занимается этой проблемой.')
+            #     await bot.send_message(cfg.ADMIN_ID, f'Сервер {order_data[4:6]} недоступен')
+            system(f'/root/enable_payed_user.sh {order_data[7]}')
         elif not can_buy[0] and not can_buy[1]:
             await call.answer(f'Недостаточно средств для активации выбранного заказа. Пополните пожалуйста счёт.')
         elif not can_buy[0] and can_buy[1]:
