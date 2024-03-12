@@ -3,7 +3,7 @@ from glQiwiApi import YooMoneyAPI, QiwiP2PClient
 from aiohttp import ClientSession
 import json
 import config as cfg
-
+from loguru import logger
 
 
 async def create_invoice(method, summ, comment):
@@ -55,9 +55,12 @@ async def check_payment(invoice_data):
     #     async with QiwiP2PClient(secret_p2p=cfg.QIWI_PRIV_KEY) as p2p:
     #         if (await p2p.get_bill_by_id(bill_id=invoice_data['created_invoice'][1])).status.value == 'PAID':
     #             return True
+    logger.info(f"invoice_data is {invoice_data}")
+    logger.info(f"invoice_data type is {type(invoice_data)}")
     if invoice_data['chosen_method'] in ('yoomoney', 'card'):
         async with YooMoneyAPI(api_access_token=cfg.YOOMONEY_PRIV_KEY) as w:
             history = await w.operation_history()
+            logger.info(f"history type is {type(history)}")
             summ = int(invoice_data['created_invoice'][2])
             for operation in history:
                 if invoice_data['created_invoice'][1] and "status='success'" and "direction='in'" \
