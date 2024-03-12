@@ -20,7 +20,7 @@ async def create_invoice(method, summ, comment):
             quick_pay_form="small",
             targets="Mustela_VPN",
             payment_type="PC",
-            amount=summ * 1.031,
+            amount=int(summ) * 1.031,
             label=comment), comment, summ
     elif method == 'card':
         # async with QiwiP2PClient(secret_p2p=cfg.QIWI_PRIV_KEY, shim_server_url=cfg.REFERER_SERVER) as p2p:
@@ -34,7 +34,7 @@ async def create_invoice(method, summ, comment):
             quick_pay_form="small",
             targets="Mustela_VPN",
             payment_type="AC",
-            amount=summ * 1.031,
+            amount=int(summ) * 1.031,
             label=comment), comment, summ
 
     elif method == 'crypta':
