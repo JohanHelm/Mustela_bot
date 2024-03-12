@@ -138,8 +138,8 @@ btn_client_method_back = InlineKeyboardButton(text='🔙 Назад', callback_d
 
 client_pay_method = InlineKeyboardMarkup()
 client_pay_method.row(btn_client_method_card, btn_client_method_yoomoney)
-client_pay_method.row(btn_client_method_crypta, btn_client_method_qiwi)
-client_pay_method.row(btn_client_method_back)
+client_pay_method.row(btn_client_method_crypta, btn_client_method_back)
+# client_pay_method.row(btn_client_method_back)
 
 
 # client_pay_menu
