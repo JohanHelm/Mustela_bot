@@ -59,11 +59,12 @@ async def check_payment(invoice_data):
     if invoice_data['chosen_method'] in ('yoomoney', 'card'):
         async with YooMoneyAPI(api_access_token=cfg.YOOMONEY_PRIV_KEY) as w:
             history = await w.operation_history()
-            # logger.info(f"history type is {type(history)}")
-            # logger.info(history)
+            logger.info(f"history type is {type(history)}")
+            logger.info(history)
             summ = int(invoice_data['created_invoice'][2])
             for operation in history:
                 logger.info(operation)
+                logger.info(type(operation))
                 if invoice_data['created_invoice'][1] and "status='success'" and "direction='in'" \
                         and f'amount={summ*0.97}' in str(operation):
                     return True
