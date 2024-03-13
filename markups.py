@@ -227,7 +227,7 @@ def activate_order(odrer_id):
 def invoice_menu(pay_link):
     btn_pay_invoice = InlineKeyboardButton(text='Внести средства', url=pay_link)
     btn_check_invoice = InlineKeyboardButton(text='Проверить платёж', callback_data='invoice_check')
-    btn_back_inoice = InlineKeyboardButton(text='Отменить платёж', callback_data='invoice_back')
+    btn_back_inoice = InlineKeyboardButton(text='🔙 Назад', callback_data='invoice_back')
     check_pay_menu = InlineKeyboardMarkup()
     check_pay_menu.row(btn_pay_invoice, btn_check_invoice)
     check_pay_menu.row(btn_back_inoice)

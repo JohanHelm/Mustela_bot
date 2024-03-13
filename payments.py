@@ -67,13 +67,12 @@ async def check_payment(invoice_data):
             for operation in history.operations:
                 logger.info(operation)
                 logger.info(type(operation))
-                if invoice_label == operation.label and \
-                        operation.status == "success" and \
-                        operation.direction == "in" and \
-                        operation.amount == invoice_summ * 0.97:
-                    # if invoice_data['created_invoice'][1] and "status='success'" and "direction='in'" \
-                    #         and f'amount={invoice_summ*0.97}' in str(operation):
-                    return True
+                if invoice_label == operation.label:
+                    if operation.status == "success" and operation.direction == "in": #and \
+                        # operation.amount == invoice_summ * 0.97:
+                        return True
+                    else:
+                        break
     elif invoice_data['chosen_method'] == 'crypta':
         pay_id = invoice_data['created_invoice'][1]
         raw_link = 'https://api.crystalpay.io/v2/invoice/info/'

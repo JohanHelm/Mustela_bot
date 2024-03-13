@@ -475,7 +475,7 @@ async def cmd_pay_check(call: types.callback_query, state: FSMContext):
         else:
             await call.answer('Ваш платёж еще не поступил', show_alert=True)
     elif call.data == 'invoice_back':
-        await pm.close_invoice(await state.get_data())
+        # await pm.close_invoice(await state.get_data())
         await state.finish()
         user_money = db.get_user_data(call.from_user.id)
         await call.bot.edit_message_media(
