@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
-from glQiwiApi import YooMoneyAPI, QiwiP2PClient
-from aiohttp import ClientSession
 import json
-import config as cfg
+
+from aiohttp import ClientSession
+from glQiwiApi import YooMoneyAPI, QiwiP2PClient
 from loguru import logger
+
+import config as cfg
 
 
 async def create_invoice(method, summ, comment):
@@ -57,16 +58,21 @@ async def check_payment(invoice_data):
     #             return True
     logger.info(f"invoice_data is {invoice_data}")
     if invoice_data['chosen_method'] in ('yoomoney', 'card'):
+        invoice_summ = int(invoice_data['created_invoice'][2])
+        invoice_label = invoice_data['created_invoice'][1]
         async with YooMoneyAPI(api_access_token=cfg.YOOMONEY_PRIV_KEY) as w:
             history = await w.operation_history()
             logger.info(f"history type is {type(history)}")
             logger.info(history)
-            summ = int(invoice_data['created_invoice'][2])
-            for operation in history:
+            for operation in history.operations:
                 logger.info(operation)
                 logger.info(type(operation))
-                if invoice_data['created_invoice'][1] and "status='success'" and "direction='in'" \
-                        and f'amount={summ*0.97}' in str(operation):
+                if invoice_label == operation.label and \
+                        operation.status == "success" and \
+                        operation.direction == "in" and \
+                        operation.amount == invoice_summ * 0.97:
+                    # if invoice_data['created_invoice'][1] and "status='success'" and "direction='in'" \
+                    #         and f'amount={invoice_summ*0.97}' in str(operation):
                     return True
     elif invoice_data['chosen_method'] == 'crypta':
         pay_id = invoice_data['created_invoice'][1]
@@ -81,8 +87,7 @@ async def check_payment(invoice_data):
     return False
 
 
-async def close_invoice(invoice_data):
-    if invoice_data['chosen_method'] in ('qiwi', 'card'):
-        async with QiwiP2PClient(secret_p2p=cfg.QIWI_PRIV_KEY) as p2p:
-            await p2p.reject_p2p_bill(bill_id=invoice_data['created_invoice'][1])
-
+# async def close_invoice(invoice_data):
+#     if invoice_data['chosen_method'] in ('qiwi', 'card'):
+#         async with QiwiP2PClient(secret_p2p=cfg.QIWI_PRIV_KEY) as p2p:
+#             await p2p.reject_p2p_bill(bill_id=invoice_data['created_invoice'][1])
